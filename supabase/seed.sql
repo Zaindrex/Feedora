@@ -1,0 +1,2 @@
+-- Do not seed credentials or guessed Auth UUIDs. Create an administrator in
+-- Supabase Auth, then add the matching profile using the real auth.users.id.
