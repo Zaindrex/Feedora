@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Feedora</title>
+    <script>
+      (function (location) {
+        var basePath = location.pathname.split('/').slice(0, 2).join('/');
+        var route = location.pathname.slice(basePath.length).replace(/^\//, '');
+        var query = location.search ? '&' + location.search.slice(1).replace(/&/g, '~and~') : '';
+        location.replace(basePath + '/?/' + route.replace(/&/g, '~and~') + query + location.hash);
+      })(window.location);
+    </script>
+  </head>
+  <body></body>
+</html>

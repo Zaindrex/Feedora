@@ -116,8 +116,12 @@ export const databaseService = {
   },
 
   async sendOwnerPasswordReset(email: string): Promise<void> {
+    const configuredAppUrl = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
+    const appBaseUrl = !import.meta.env.DEV && configuredAppUrl
+      ? configuredAppUrl
+      : `${window.location.origin}${import.meta.env.BASE_URL}`;
     const result = await requireSupabase().auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: `${appBaseUrl.replace(/\/+$/, '')}/reset-password`,
     });
     if (result.error) throw new Error(result.error.message);
   },

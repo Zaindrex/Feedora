@@ -18,10 +18,10 @@ export const QRCodeCard: React.FC<QRCodeCardProps> = ({ business }) => {
   const [frameColor, setFrameColor] = useState<string>('#0F917D');
 
   const configuredAppUrl = import.meta.env.VITE_PUBLIC_APP_URL?.trim();
-  const appOrigin = import.meta.env.DEV || !configuredAppUrl
-    ? window.location.origin
-    : configuredAppUrl.replace(/\/+$/, '');
-  const reviewUrl = `${appOrigin}/review/${encodeURIComponent(business.slug)}`;
+  const appBaseUrl = !import.meta.env.DEV && configuredAppUrl
+    ? configuredAppUrl
+    : `${window.location.origin}${import.meta.env.BASE_URL}`;
+  const reviewUrl = `${appBaseUrl.replace(/\/+$/, '')}/review/${encodeURIComponent(business.slug)}`;
   const qrRef = useRef<HTMLDivElement>(null);
 
   const handleCopyLink = () => {

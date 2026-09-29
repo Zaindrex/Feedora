@@ -203,7 +203,7 @@ export const AdminBusinessesPage: React.FC = () => {
                         <div>
                           <p className="font-semibold text-slate-900">{biz.name}</p>
                           <a
-                            href={`/review/${biz.slug}`}
+                            href={`${import.meta.env.BASE_URL}review/${encodeURIComponent(biz.slug)}`}
                             target="_blank"
                             rel="noreferrer"
                             className="text-primary hover:underline font-mono text-[11px] inline-flex items-center gap-1"

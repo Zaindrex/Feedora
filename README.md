@@ -33,9 +33,9 @@ Copy `.env.example` to `.env` for local development (`Copy-Item .env.example .en
 | --- | --- | --- |
 | `VITE_SUPABASE_URL` | Yes | Supabase project URL used by the browser client. |
 | `VITE_SUPABASE_ANON_KEY` | Yes | Supabase publishable/anon key. Never use a service-role or secret key here. |
-| `VITE_PUBLIC_APP_URL` | Production | Canonical deployed app origin used in generated QR links. Leave unset locally; development uses the current local origin. |
+| `VITE_PUBLIC_APP_URL` | Production | Canonical deployed app base URL used in generated QR links and password-reset redirects. Leave unset locally; development uses the current local origin. |
 
-Vite embeds `VITE_` variables at build time. Set these in the frontend hosting platform and rebuild after changing them. `VITE_PUBLIC_APP_URL` should be the final deployed origin, with no path suffix; do not set it to localhost or a temporary deployment URL.
+Vite embeds `VITE_` variables at build time. Set these in the frontend hosting platform and rebuild after changing them. `VITE_PUBLIC_APP_URL` must be the final deployed app base URL, including `/Feedora` for the GitHub Pages project site; do not set it to localhost or a temporary deployment URL.
 
 Supabase Edge Functions receive `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` from the Supabase runtime. They must remain server-side and must never be added to frontend variables or committed files. Additional Edge Function settings:
 
@@ -100,15 +100,19 @@ Configure `AI_API_KEY` and, when needed, `AI_PROVIDER`, `AI_MODEL`, and `APP_URL
 3. Open `http://localhost:5173`.
 
 ## Frontend Deployment
-1. Push the source repository to GitHub. Do not commit `.env` or any Supabase/AI credentials.
-2. In Vercel, import the GitHub repository and use the Vite preset with build command `npm run build` and output directory `dist`.
-3. Configure `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_PUBLIC_APP_URL` in the Vercel project's Environment Variables. Set `VITE_PUBLIC_APP_URL` to the final production origin after the domain is known, then redeploy.
-4. The included `vercel.json` rewrites application routes to `index.html`, so `/review/:businessSlug` works on direct visits and reloads.
+GitHub Pages deployment is automated by `.github/workflows/deploy-pages.yml` on pushes to `main` and can also be started manually from Actions.
 
-The equivalent local production build is `npm run build`; Vite writes the deployable static files to `dist/`. Deploying the frontend does not run migrations or deploy Supabase Edge Functions.
+1. In repository **Settings → Secrets and variables → Actions → Variables**, add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_PUBLIC_APP_URL`. The GitHub Pages base URL is `https://Zaindrex.github.io/Feedora`; use the final custom-domain base URL instead if one is configured. The Supabase anon key is designed for browser use; never put a service-role or secret key in these variables.
+2. In **Settings → Pages**, set the build and deployment source to **GitHub Actions**.
+3. Push to `main` or run the **Deploy Feedora to GitHub Pages** workflow. The workflow validates the frontend variables, runs `npm run build`, and deploys `dist/`.
+4. The Pages `404.html` fallback and router base support direct visits and reloads at `/Feedora/review/:businessSlug`.
+
+The repository is public, so GitHub Pages can serve the site at `https://Zaindrex.github.io/Feedora`. If a custom domain is configured later, update `VITE_PUBLIC_APP_URL` to that final app base URL and redeploy.
+
+The local production build is `npm run build`; Vite writes deployable static files to `dist/`. Deploying the frontend does not run migrations or deploy Supabase Edge Functions.
 
 ## QR Setup
-Owners manage QR codes from `/owner/qr`. In development, QR URLs use the current local origin. Production builds use `VITE_PUBLIC_APP_URL` when configured, falling back to the current deployed origin; the QR route is `/review/{businessSlug}`. Set the production variable to the final Feedora domain before creating production QR assets.
+Owners manage QR codes from `/owner/qr`. In development, QR URLs use the current local origin. Production builds use `VITE_PUBLIC_APP_URL` when configured, falling back to the deployed origin and Vite base path; the QR route is `/review/{businessSlug}`. Set the production variable to the final Feedora app base URL before creating production QR assets.
 
 ## Google Review URL Setup
 * The Google Review URL is critical for the final conversion step.

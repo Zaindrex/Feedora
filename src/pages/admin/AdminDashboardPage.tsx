@@ -274,7 +274,7 @@ export const AdminDashboardPage: React.FC = () => {
                       {biz.status}
                     </Badge>
                     <a
-                      href={`/review/${biz.slug}`}
+                      href={`${import.meta.env.BASE_URL}review/${encodeURIComponent(biz.slug)}`}
                       target="_blank"
                       rel="noreferrer"
                       className="text-slate-400 hover:text-primary p-1"
