@@ -196,7 +196,7 @@ export type Database = {
           id: string;
           product_name: string;
           primary_color: string;
-          ai_provider: 'gemini' | 'openai' | 'hybrid_synthesizer';
+          ai_provider: 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
           ai_model: string;
           ai_temperature: number;
           max_output_length: number;
@@ -207,7 +207,7 @@ export type Database = {
           id?: string;
           product_name: string;
           primary_color: string;
-          ai_provider?: 'gemini' | 'openai' | 'hybrid_synthesizer';
+          ai_provider?: 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
           ai_model: string;
           ai_temperature?: number;
           max_output_length?: number;

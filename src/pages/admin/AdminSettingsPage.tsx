@@ -92,6 +92,7 @@ export const AdminSettingsPage: React.FC = () => {
               options={[
                 { value: 'gemini', label: 'Google Gemini (server-side)' },
                 { value: 'openai', label: 'OpenAI (server-side)' },
+                { value: 'openrouter', label: 'OpenRouter (server-side)' },
               ]}
               helperText="AI provider settings are applied by the server-side review function."
             />
@@ -100,7 +101,7 @@ export const AdminSettingsPage: React.FC = () => {
               label="Model Identifier"
               value={settings.aiModel}
               onChange={(e) => setSettings({ ...settings, aiModel: e.target.value })}
-              placeholder="gemini-2.5-flash"
+              placeholder={settings.aiProvider === 'openrouter' ? 'inclusionai/ling-3.0-flash-sante:free' : 'gemini-2.5-flash'}
             />
           </div>
 

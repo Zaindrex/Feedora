@@ -12,8 +12,8 @@ export const APP_CONFIG = {
 export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   productName: 'Feedora',
   primaryColor: '#0F917D',
-  aiProvider: 'gemini',
-  aiModel: 'gemini-2.5-flash',
+  aiProvider: 'openrouter',
+  aiModel: 'inclusionai/ling-3.0-flash-sante:free',
   aiTemperature: 0.7,
   maxOutputLength: 350,
   enableAuditLogging: true,

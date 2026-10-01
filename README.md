@@ -42,8 +42,8 @@ Supabase Edge Functions receive `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` f
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `AI_API_KEY` | Yes for `generate-review` | Provider API credential, configured as a Supabase secret. |
-| `AI_PROVIDER` | Optional | Provider override; defaults to platform settings or `gemini`. |
-| `AI_MODEL` | Optional | Model override; defaults to platform settings or `gemini-2.5-flash`. |
+| `AI_PROVIDER` | Optional | Provider fallback; defaults to platform settings or `openrouter`. |
+| `AI_MODEL` | Optional | Model fallback; defaults to platform settings or `inclusionai/ling-3.0-flash-sante:free`. |
 | `APP_URL` | Optional | Production origin for owner invitation redirects; request origin is the fallback. |
 
 Configure backend values with Supabase Edge Function secrets, never in `.env`, GitHub source, or `VITE_` variables. `.env` files and local Supabase CLI state are excluded by `.gitignore`.
@@ -86,7 +86,7 @@ supabase functions deploy manage-business
 supabase functions deploy manage-owner
 ```
 
-Configure `AI_API_KEY` and, when needed, `AI_PROVIDER`, `AI_MODEL`, and `APP_URL` as Supabase secrets. Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the Edge Function runtime. Never expose the service-role key or AI credentials to the browser.
+Configure `AI_API_KEY` and, when needed, `AI_PROVIDER=openrouter`, `AI_MODEL=inclusionai/ling-3.0-flash-sante:free`, and `APP_URL` as Supabase Edge Function secrets. The platform settings row takes precedence over `AI_PROVIDER` and `AI_MODEL`; select OpenRouter and this model in Admin Settings to use the saved platform configuration. Supabase supplies `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to the Edge Function runtime. Never expose the service-role key or AI credentials to the browser.
 
 ## Local Development
 1. Install dependencies:

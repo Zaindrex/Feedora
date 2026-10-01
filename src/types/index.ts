@@ -104,7 +104,7 @@ export interface AuditLog {
 export interface PlatformSettings {
   productName: string;
   primaryColor: string;
-  aiProvider: 'gemini' | 'openai' | 'hybrid_synthesizer';
+  aiProvider: 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
   aiModel: string;
   aiTemperature: number;
   maxOutputLength: number;
