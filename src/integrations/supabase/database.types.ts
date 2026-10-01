@@ -44,6 +44,7 @@ export type Database = {
           phone: string | null;
           website: string | null;
           google_review_url: string;
+          custom_review_url: string | null;
           status: 'active' | 'disabled';
           created_at: string;
           updated_at: string;
@@ -60,6 +61,7 @@ export type Database = {
           phone?: string | null;
           website?: string | null;
           google_review_url: string;
+          custom_review_url?: string | null;
           status?: 'active' | 'disabled';
           created_at?: string;
           updated_at?: string;
@@ -196,7 +198,7 @@ export type Database = {
           id: string;
           product_name: string;
           primary_color: string;
-          ai_provider: 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
+          ai_provider: 'google' | 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
           ai_model: string;
           ai_temperature: number;
           max_output_length: number;
@@ -207,7 +209,7 @@ export type Database = {
           id?: string;
           product_name: string;
           primary_color: string;
-          ai_provider?: 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
+          ai_provider?: 'google' | 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
           ai_model: string;
           ai_temperature?: number;
           max_output_length?: number;
@@ -231,6 +233,7 @@ export type Database = {
           category: string;
           address: string | null;
           google_review_url: string;
+          custom_review_url: string | null;
         }[];
       };
       update_public_review_session: {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { ExternalLink, Save } from 'lucide-react';
-import { databaseService } from '../../services/databaseService';
+import { databaseService, isDirectGoogleReviewUrl, isOptionalHttpUrl } from '../../services/databaseService';
 import { Business } from '../../types';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -35,8 +35,12 @@ export const OwnerBusinessPage: React.FC = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeBusiness || !formData.name || !formData.google_review_url) {
-      toast.error('Business name and Google Review URL are required.');
+    if (!activeBusiness || !formData.name || !isDirectGoogleReviewUrl(formData.google_review_url || '')) {
+      toast.error('Business name and a direct Google write-review URL are required.');
+      return;
+    }
+    if (!isOptionalHttpUrl(formData.custom_review_url)) {
+      toast.error('Custom Review Website URL must be an absolute HTTP or HTTPS URL.');
       return;
     }
 
@@ -44,6 +48,7 @@ export const OwnerBusinessPage: React.FC = () => {
     const updatedBiz = {
       ...activeBusiness,
       ...formData,
+      custom_review_url: formData.custom_review_url?.trim() || null,
       updated_at: new Date().toISOString(),
     } as Business;
 
@@ -60,8 +65,8 @@ export const OwnerBusinessPage: React.FC = () => {
   };
 
   const handleTestGoogleLink = () => {
-    if (!formData.google_review_url) {
-      toast.error('Please enter a Google Review URL first.');
+    if (!isDirectGoogleReviewUrl(formData.google_review_url || '')) {
+      toast.error('Enter a direct Google write-review URL first.');
       return;
     }
     window.open(formData.google_review_url, '_blank', 'noopener,noreferrer');
@@ -129,6 +134,20 @@ export const OwnerBusinessPage: React.FC = () => {
           />
         </Card>
 
+        <Card className="p-6 space-y-4">
+          <h3 className="text-base font-semibold text-slate-900 border-b border-slate-100 pb-3">
+            Custom Review Website
+          </h3>
+          <Input
+            label="Custom Review Website URL"
+            placeholder="https://example.com/reviews"
+            value={formData.custom_review_url || ''}
+            onChange={(e) => handleChange('custom_review_url', e.target.value)}
+            helperText="Optional. Customers will be able to post their review on this website."
+            type="url"
+          />
+        </Card>
+
         {/* Google Review URL Card */}
         <Card className="p-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -152,10 +171,11 @@ export const OwnerBusinessPage: React.FC = () => {
           </div>
 
           <Input
-            label="Google Review URL"
+            label="Direct Google Write-a-Review URL"
             value={formData.google_review_url || ''}
             onChange={(e) => handleChange('google_review_url', e.target.value)}
             placeholder="https://search.google.com/local/writereview?placeid=..."
+            helperText="Use the direct Google write-review link for this business, not its Maps listing or reviews page."
             required
           />
 

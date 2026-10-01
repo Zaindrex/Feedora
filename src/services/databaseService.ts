@@ -17,12 +17,35 @@ export interface PublicBusiness {
   category: string;
   address: string | null;
   google_review_url: string;
+  custom_review_url: string | null;
   status: 'active';
 }
 
 function unwrap<T>(result: { data: T; error: { message: string } | null }): T {
   if (result.error) throw new Error(result.error.message);
   return result.data;
+}
+
+export function isDirectGoogleReviewUrl(value: string): boolean {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' &&
+      url.hostname === 'search.google.com' &&
+      url.pathname === '/local/writereview' &&
+      Boolean(url.searchParams.get('placeid')?.trim());
+  } catch {
+    return false;
+  }
+}
+
+export function isOptionalHttpUrl(value: string | null | undefined): boolean {
+  if (!value?.trim()) return true;
+  try {
+    const url = new URL(value.trim());
+    return ['http:', 'https:'].includes(url.protocol) && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
 }
 
 function toSettings(row: {
@@ -37,7 +60,7 @@ function toSettings(row: {
   return {
     productName: row.product_name,
     primaryColor: row.primary_color,
-    aiProvider: row.ai_provider,
+    aiProvider: row.ai_provider === 'gemini' ? 'google' : row.ai_provider,
     aiModel: row.ai_model,
     aiTemperature: Number(row.ai_temperature),
     maxOutputLength: row.max_output_length,
@@ -158,6 +181,7 @@ export const databaseService = {
       phone: business.phone,
       website: business.website,
       google_review_url: business.google_review_url,
+      custom_review_url: business.custom_review_url?.trim() || null,
     }).eq('id', business.id).select('*').single();
     return unwrap(result) as Business;
   },

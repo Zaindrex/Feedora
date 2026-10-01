@@ -90,7 +90,7 @@ export const AdminSettingsPage: React.FC = () => {
                 })
               }
               options={[
-                { value: 'gemini', label: 'Google Gemini (server-side)' },
+                { value: 'google', label: 'Google Gemini (server-side)' },
                 { value: 'openai', label: 'OpenAI (server-side)' },
                 { value: 'openrouter', label: 'OpenRouter (server-side)' },
               ]}

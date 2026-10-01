@@ -4,15 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import {
   Sparkles,
-  Copy,
-  Check,
   ExternalLink,
   RotateCcw,
   Edit3,
   MapPin,
   AlertCircle,
 } from 'lucide-react';
-import { databaseService, PublicBusiness } from '../../services/databaseService';
+import { databaseService, isDirectGoogleReviewUrl, isOptionalHttpUrl, PublicBusiness } from '../../services/databaseService';
 import { aiService } from '../../services/aiService';
 import { StarRating } from '../../components/feedback/StarRating';
 import { Button } from '../../components/ui/Button';
@@ -29,7 +27,7 @@ export const CustomerReviewPage: React.FC = () => {
   const [flowError, setFlowError] = useState<string | null>(null);
   const scanRecorded = useRef(false);
 
-  // Review Steps State: 1: Rating, 2: Feedback Chips, 3: AI Loading, 4: Review Selection & Edit, 5: Copy & Google
+  // Review Steps State: 1: Rating, 2: Feedback Chips, 3: AI Loading, 4: Review Selection & Edit, 5: Post review
   const [step, setStep] = useState<'rate' | 'feedback' | 'generating' | 'drafts'>('rate');
   const [rating, setRating] = useState<number>(0);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -41,8 +39,8 @@ export const CustomerReviewPage: React.FC = () => {
   const [selectedDraftIndex, setSelectedDraftIndex] = useState<number>(0);
   const [editingReview, setEditingReview] = useState<string>('');
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [copied, setCopied] = useState<boolean>(false);
-  const [hasClickedGoogle, setHasClickedGoogle] = useState<boolean>(false);
+  const [isOpeningReview, setIsOpeningReview] = useState<boolean>(false);
+  const reviewSaved = useRef(false);
 
   useEffect(() => {
     let active = true;
@@ -148,54 +146,60 @@ export const CustomerReviewPage: React.FC = () => {
     }
   };
 
-  // Handle Copy Review
-  const handleCopyReview = async () => {
-    if (!business || !drafts.length || !editingReview.trim()) return;
+  const handlePostReview = async (destinationType: 'custom' | 'google') => {
+    if (!business || !drafts.length || !editingReview.trim() || isOpeningReview) return;
+    const reviewUrl = destinationType === 'custom' ? business.custom_review_url : business.google_review_url;
+    const validUrl = destinationType === 'custom'
+      ? isOptionalHttpUrl(reviewUrl) && Boolean(reviewUrl?.trim())
+      : isDirectGoogleReviewUrl(reviewUrl || '');
+    if (!validUrl || !reviewUrl) {
+      setFlowError(destinationType === 'custom'
+        ? 'This venue’s custom review website URL is invalid.'
+        : 'This venue’s direct Google write-review link is not configured.');
+      return;
+    }
+
+    const destination = window.open('about:blank', '_blank');
+    if (!destination) {
+      setFlowError('Allow pop-ups to continue to the review website.');
+      return;
+    }
+    destination.opener = null;
+    setIsOpeningReview(true);
     const finalContent = editingReview.trim();
     try {
       await navigator.clipboard.writeText(finalContent);
-      await databaseService.addReview({
-        business_id: business.id,
-        rating,
-        feedback: customNote,
-        selected_tags: selectedTags,
-        generated_review: drafts[selectedDraftIndex] || finalContent,
-        final_review: finalContent,
-        session_id: sessionId,
-        copied_to_clipboard: true,
-        clicked_google: hasClickedGoogle,
-      });
+      if (!reviewSaved.current) {
+        await databaseService.addReview({
+          business_id: business.id,
+          rating,
+          feedback: customNote,
+          selected_tags: selectedTags,
+          generated_review: drafts[selectedDraftIndex] || finalContent,
+          final_review: finalContent,
+          session_id: sessionId,
+          copied_to_clipboard: true,
+          clicked_google: false,
+        });
+        reviewSaved.current = true;
+      }
       await Promise.all([
         databaseService.updateReviewSession(sessionId, { status: 'copied' }),
         databaseService.recordEvent(business.id, 'review_copied', { reviewLength: finalContent.length, rating }, sessionId),
       ]);
+      if (destinationType === 'google') {
+        await databaseService.recordEvent(business.id, 'google_review_clicked', { rating }, sessionId);
+        await databaseService.markGoogleReviewClicked(sessionId);
+        await databaseService.updateReviewSession(sessionId, { status: 'completed' });
+      }
       setFlowError(null);
-      setCopied(true);
       confetti({ particleCount: 75, spread: 60, origin: { y: 0.75 }, colors: ['#0F917D', '#2dd4bf', '#f59e0b', '#3b82f6'] });
-      setTimeout(() => setCopied(false), 4000);
-    } catch (error) {
-      setFlowError(error instanceof Error ? error.message : 'Could not save your review draft.');
-    }
-  };
-
-  // Handle Google Review click
-  const handleGoogleClick = async () => {
-    if (!business || !drafts.length || !editingReview.trim()) return;
-    const destination = window.open('about:blank', '_blank');
-    if (!destination) {
-      setFlowError('Allow pop-ups to continue to the Google review page.');
-      return;
-    }
-    destination.opener = null;
-    try {
-      await databaseService.recordEvent(business.id, 'google_review_clicked', { rating }, sessionId);
-      await databaseService.markGoogleReviewClicked(sessionId);
-      await databaseService.updateReviewSession(sessionId, { status: 'completed' });
-      setHasClickedGoogle(true);
-      destination.location.href = business.google_review_url;
+      destination.location.href = reviewUrl;
     } catch (error) {
       destination.close();
-      setFlowError(error instanceof Error ? error.message : 'Could not record your Google review click.');
+      setFlowError(error instanceof Error ? error.message : 'Could not prepare your review for posting.');
+    } finally {
+      setIsOpeningReview(false);
     }
   };
 
@@ -502,27 +506,30 @@ export const CustomerReviewPage: React.FC = () => {
                 </button>
               </div>
 
-              {/* Action Buttons: COPY & GOOGLE */}
+              {/* Review destinations */}
               <div className="pt-2 space-y-3">
-                <Button
-                  variant={copied ? 'secondary' : 'primary'}
-                  size="lg"
-                  className="w-full justify-center transition-all"
-                  leftIcon={copied ? <Check className="w-5 h-5 text-emerald-600" /> : <Copy className="w-5 h-5" />}
-                  onClick={handleCopyReview}
-                >
-                  {copied ? 'Review Copied to Clipboard!' : '1. Copy Review'}
-                </Button>
+                {business.custom_review_url?.trim() && (
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full justify-center"
+                    leftIcon={<ExternalLink className="w-5 h-5" />}
+                    onClick={() => void handlePostReview('custom')}
+                    disabled={isOpeningReview}
+                  >
+                    Post Review on Website
+                  </Button>
+                )}
 
                 <Button
                   variant="outline"
                   size="lg"
                   className="w-full justify-center border-slate-300 hover:bg-amber-50 hover:border-amber-400 text-slate-800 font-semibold"
                   leftIcon={<ExternalLink className="w-5 h-5 text-amber-500" />}
-                  onClick={handleGoogleClick}
-                  disabled={!drafts.length || !editingReview.trim()}
+                  onClick={() => void handlePostReview('google')}
+                  disabled={!drafts.length || !editingReview.trim() || isOpeningReview}
                 >
-                  2. Review us on Google
+                  Review us on Google
                 </Button>
               </div>
 

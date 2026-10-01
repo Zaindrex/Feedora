@@ -5,7 +5,7 @@ import {
   ExternalLink,
   Trash2
 } from 'lucide-react';
-import { databaseService } from '../../services/databaseService';
+import { databaseService, isDirectGoogleReviewUrl, isOptionalHttpUrl } from '../../services/databaseService';
 import { Business, UserProfile } from '../../types';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -34,6 +34,7 @@ export const AdminBusinessesPage: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [googleReviewUrl, setGoogleReviewUrl] = useState('');
+  const [customReviewUrl, setCustomReviewUrl] = useState('');
 
   const loadData = async () => {
     const [businessRows, ownerRows] = await Promise.all([
@@ -50,8 +51,12 @@ export const AdminBusinessesPage: React.FC = () => {
 
   const handleCreateBusiness = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !googleReviewUrl.trim()) {
-      toast.error('Venue name and Google Review URL are mandatory.');
+    if (!name.trim() || !isDirectGoogleReviewUrl(googleReviewUrl)) {
+      toast.error('Venue name and a direct Google write-review URL are required.');
+      return;
+    }
+    if (!isOptionalHttpUrl(customReviewUrl)) {
+      toast.error('Custom Review Website URL must be an absolute HTTP or HTTPS URL.');
       return;
     }
 
@@ -78,6 +83,7 @@ export const AdminBusinessesPage: React.FC = () => {
         phone,
         website,
         google_review_url: googleReviewUrl,
+        custom_review_url: customReviewUrl.trim() || null,
         status: 'active',
       });
       toast.success(`Business "${newBiz.name}" created with QR slug: /review/${newBiz.slug}`);
@@ -88,6 +94,7 @@ export const AdminBusinessesPage: React.FC = () => {
       setPhone('');
       setWebsite('');
       setGoogleReviewUrl('');
+      setCustomReviewUrl('');
       await loadData();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not create business.');
@@ -304,12 +311,21 @@ export const AdminBusinessesPage: React.FC = () => {
           />
 
           <Input
-            label="Google Business Review URL"
+            label="Direct Google Write-a-Review URL"
             placeholder="https://search.google.com/local/writereview?placeid=..."
             value={googleReviewUrl}
             onChange={(e) => setGoogleReviewUrl(e.target.value)}
-            helperText="The URL patrons are forwarded to after copying their AI review."
+            helperText="Use the direct Google write-review link for this business, not its Maps listing or reviews page."
             required
+          />
+
+          <Input
+            label="Custom Review Website URL"
+            placeholder="https://example.com/reviews"
+            value={customReviewUrl}
+            onChange={(e) => setCustomReviewUrl(e.target.value)}
+            helperText="Optional. Customers will be able to post their review on this website."
+            type="url"
           />
 
           <Input

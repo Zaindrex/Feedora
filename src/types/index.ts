@@ -27,6 +27,7 @@ export interface Business {
   phone?: string;
   website?: string;
   google_review_url: string;
+  custom_review_url?: string | null;
   status: BusinessStatus;
   created_at: string;
   updated_at?: string;
@@ -104,7 +105,7 @@ export interface AuditLog {
 export interface PlatformSettings {
   productName: string;
   primaryColor: string;
-  aiProvider: 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
+  aiProvider: 'google' | 'gemini' | 'openai' | 'openrouter' | 'hybrid_synthesizer';
   aiModel: string;
   aiTemperature: number;
   maxOutputLength: number;
